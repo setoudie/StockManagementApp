@@ -152,14 +152,15 @@ for date in dates:
             'weekend': 1 if date.weekday() >= 5 else 0
         }
 
-        # Prix dynamique
-        entry['prix_vente'] = ajuster_prix(entry)
+        # Prix dynamique avec bruit
+        prix_base = ajuster_prix(entry)
+        entry['prix_vente'] = int(prix_base * np.random.normal(1, 0.05))  # Bruit de 5%
 
-        # Génération de la demande
+        # Génération de la demande avec bruit
         demande_base = int(parametres_produits['stock_securite'][produit] * 1.7)
         if date.weekday() >= 5:
             demande_base = int(demande_base * 2.3)
-        entry['demande_journaliere'] = np.random.poisson(demande_base)
+        entry['demande_journaliere'] = np.random.poisson(demande_base) + int(np.random.normal(0, 5))  # Bruit de 5 unités
 
         # Calcul des ventes
         entry['quantite_vendue'] = min(entry['demande_journaliere'], entry['stock_initial'])
@@ -182,7 +183,7 @@ colonnes = [
     'chiffre_affaires'
 ]
 
-df[colonnes].to_csv('dataset_final_dieupeul.csv',
+df[colonnes].to_csv('dataset_stock_final_dieupeul.csv',
                     index=False,
                     quoting=csv.QUOTE_NONE,
                     escapechar='\\')
