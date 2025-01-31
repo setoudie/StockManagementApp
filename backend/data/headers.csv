@@ -1,13 +1,16 @@
 Colonne,Type,Description
-date,str,Date de l'enregistrement des données au format YYYY-MM-DD.
-produit_id,str,Identifiant du produit.
-categorie,str,Catégorie du produit.
-quantite_vendue,int,Quantité vendue du produit pour la journée.
-stock_initial,int,Quantité de stock disponible au début de la journée.
-peremption_jours,int,Nombre de jours restants avant la péremption du produit.
-prix_vente,float,Prix de vente unitaire du produit.
-promotion,int,Indicateur de promotion (0 = pas de promotion; 1 = promotion active).
-temperature_max,float,Température maximale enregistrée pour la journée en °C.
-pluie_mm,float,Quantité de pluie enregistrée pour la journée en mm.
-evenement,str,Événement culturel associé à la journée (Ramadan; Tabaski; ou None).
-magasin,str,Nom du magasin où les données ont été enregistrées.
+date,string,Date au format YYYY-MM-DD
+produit,string,Nom du produit (10 produits disponibles)
+categorie,string,Catégorie du produit (Laitage/Légumes/Fruits/Viandes/Poissons/Epicerie)
+prix_vente,integer,Prix de vente en FCFA (ajusté selon les événements)
+demande_journaliere,integer,Demande client estimée (loi de Poisson avec variations)
+quantite_vendue,integer,Quantité réellement vendue (min(demande_journaliere; stock_initial))
+ventes_perdues,integer,Demande non satisfaite (demande_journaliere - quantite_vendue)
+stock_initial,integer,Stock disponible en début de journée
+duree_peremption,integer,Durée de péremption en jours (spécifique au produit)
+temperature,float,Température maximale quotidienne à Dakar (°C)
+promotion,integer,Indicateur de promotion (0=non; 1=oui)
+jour_semaine,string,Nom du jour en français (ex: Lundi)
+weekend,integer,Indicateur weekend (1=weekend; 0=jour ouvré)
+evenement,string,Événement en cours (Ramadan/Aid_el_Fitr/Tabaski/Tabaski_JourJ/Aucun)
+chiffre_affaires,integer,Chiffre d'affaires journalier (quantite_vendue × prix_vente)
