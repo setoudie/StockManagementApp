@@ -1,6 +1,6 @@
 <h1 align="center">React Admin Dashboard</h1>
 
-![img.png](img.png)![Demo App](/public/screenshot-for-readme-1.png)
+![img.png](img.png)!
 
 ### This is a free admin dashboard ui kit built with:
 
