@@ -1,32 +1,58 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import axios from 'axios';
 
 const DataUploader = ({ onUploadSuccess }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
+  const [previewData, setPreviewData] = useState(null); // Pour stocker l'aperçu des données
+  const [file, setFile] = useState(null); // Pour stocker le fichier sélectionné
 
   const onDrop = useCallback(async (acceptedFiles) => {
-    const file = acceptedFiles[0];
+    const selectedFile = acceptedFiles[0];
 
-    if (!file) {
+    if (!selectedFile) {
       setError('Veuillez sélectionner un fichier CSV');
       return;
     }
 
-    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
       setError('Seuls les fichiers CSV sont acceptés');
       return;
     }
+
+    setFile(selectedFile); // Mettre à jour le fichier sélectionné
+
+    // Lecture du fichier CSV pour afficher un aperçu
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result;
+      const rows = text.split('\n').slice(0, 5); // Prendre les 5 premières lignes pour l'aperçu
+      const preview = rows.map(row => row.split(','));
+      setPreviewData(preview); // Mettre à jour l'aperçu
+    };
+    reader.readAsText(selectedFile);
 
     try {
       setIsUploading(true);
       setError('');
 
-      // Simulation d'upload
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Préparez le form-data pour l'envoi du fichier
+      const formData = new FormData();
+      formData.append('file', selectedFile);
 
-      onUploadSuccess();
+      // Remplacez l'URL par celle de votre backend Flask
+      const response = await axios.post('http://127.0.0.1:5000/upload-csv', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      // Par exemple, le backend renvoie les données utiles extraites du CSV
+      console.log('Réponse du serveur:', response.data);
+      onUploadSuccess(response.data);
     } catch (err) {
+      console.error("Erreur lors de l'upload :", err);
       setError("Échec de l'upload, veuillez réessayer");
     } finally {
       setIsUploading(false);
@@ -50,10 +76,8 @@ const DataUploader = ({ onUploadSuccess }) => {
           ${error ? 'border-red-500' : ''}`}
       >
         <input {...getInputProps()} />
-
         <div className="space-y-4">
           <div className="text-6xl">📁</div>
-
           {isUploading ? (
             <div className="text-blue-400">
               <p className="text-xl font-semibold">Traitement du fichier...</p>
@@ -64,7 +88,7 @@ const DataUploader = ({ onUploadSuccess }) => {
               <p className="text-xl font-semibold">
                 {isDragActive ? 'Déposez votre fichier ici' : 'Glissez-déposez votre CSV ou cliquez pour sélectionner'}
               </p>
-              <p className="text-sm text-gray-400">Taille maximale : 10MB</p>
+              <p className="text-sm text-gray-400">Taille maximale : 2.00Mo</p>
             </>
           )}
         </div>
@@ -76,6 +100,33 @@ const DataUploader = ({ onUploadSuccess }) => {
             <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
           </svg>
           {error}
+        </div>
+      )}
+
+      {/* Aperçu des données CSV */}
+      {previewData && (
+        <div className="mt-4 p-4 border rounded-md bg-gray-50">
+          <h3 className="text-lg font-semibold mb-2">Aperçu des données envoyées :</h3>
+          <table className="w-full text-sm">
+            <thead>
+              <tr>
+                {previewData[0].map((header, index) => (
+                  <th key={index} className="border px-2 py-1 text-left">{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {previewData.map((row, rowIndex) => (
+                rowIndex > 0 && (
+                  <tr key={rowIndex}>
+                    {row.map((cell, index) => (
+                      <td key={index} className="border px-2 py-1">{cell}</td>
+                    ))}
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
