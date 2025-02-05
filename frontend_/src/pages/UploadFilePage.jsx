@@ -1,7 +1,7 @@
 import React from 'react';
 import DataUploader from '../components/uploader/DataUploader';
 
-const UploadFilePage = ({ onUploadSuccess }) => {
+const UploadFilePage = ({ onUploadSuccess = () => {} }) => {
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6">
       <div className="w-full max-w-4xl text-center space-y-8">
@@ -25,7 +25,6 @@ const UploadFilePage = ({ onUploadSuccess }) => {
                   Commencez par importer votre dernier export CSV de stock
                 </p>
               </div>
-
               <DataUploader onUploadSuccess={onUploadSuccess} />
             </div>
           </div>

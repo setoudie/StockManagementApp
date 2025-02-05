@@ -20,7 +20,7 @@ def upload_csv():
 
     # Lire le fichier CSV
     content = file.read().decode('utf-8')
-
+    print(content)
     return jsonify({'message': 'Upload successful', 'file_size': len(content)}), 200
 
 if __name__ == '__main__':
