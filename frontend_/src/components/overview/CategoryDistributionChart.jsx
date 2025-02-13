@@ -7,6 +7,7 @@ const categoryData = [
 	{ name: "Home & Garden", value: 2800 },
 	{ name: "Books", value: 2100 },
 	{ name: "Sports & Outdoors", value: 1900 },
+	{ name: "Sports", value: 2900 },
 ];
 
 const COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#10B981", "#F59E0B"];

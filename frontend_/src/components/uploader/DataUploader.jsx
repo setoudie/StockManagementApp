@@ -1,63 +1,76 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import axios from 'axios';
 
 const DataUploader = ({ onUploadSuccess = () => {} }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const [previewData, setPreviewData] = useState(null); // Pour stocker l'aperçu des données
   const [file, setFile] = useState(null); // Pour stocker le fichier sélectionné
+  const [isFileValid, setIsFileValid] = useState(false); // Pour vérifier si le fichier est valide
+
+  // Colonnes requises dans le fichier CSV
+  const requiredColumns = [
+    'date',
+    'produit',
+    'categorie',
+    'prix_vente',
+    'demande_journaliere',
+    'quantite_vendue',
+    'ventes_perdues',
+    'stock_initial',
+    'duree_peremption',
+    'temperature',
+    'promotion',
+    'jour_semaine',
+    'weekend',
+    'evenement',
+    'chiffre_affaires',
+  ];
 
   const onDrop = useCallback(async (acceptedFiles) => {
     const selectedFile = acceptedFiles[0];
+
     if (!selectedFile) {
       setError('Veuillez sélectionner un fichier CSV');
+      setIsFileValid(false); // Le fichier n'est pas valide
       return;
     }
+
     if (selectedFile.type !== 'text/csv' && !selectedFile.name.endsWith('.csv')) {
       setError('Seuls les fichiers CSV sont acceptés');
+      setIsFileValid(false); // Le fichier n'est pas valide
       return;
     }
 
     setFile(selectedFile); // Mettre à jour le fichier sélectionné
 
-    // Lecture du fichier CSV pour afficher un aperçu
     const reader = new FileReader();
-    reader.onload = () => {
+
+    reader.onload = async () => {
       const text = reader.result;
-      const rows = text.split('\n').slice(0, 5); // Prendre les 5 premières lignes pour l'aperçu
-      const preview = rows.map(row => row.split(','));
-      setPreviewData(preview); // Mettre à jour l'aperçu
-    };
-    reader.readAsText(selectedFile);
+      const rows = text.split('\n'); // Diviser le fichier en lignes
 
-    try {
-      setIsUploading(true);
-      setError('');
+      // Extraire les en-têtes du fichier
+      const headers = rows[0].split(',').map((header) => header.trim().toLowerCase());
 
-      // Préparez le form-data pour l'envoi du fichier
-      const formData = new FormData();
-      formData.append('file', selectedFile);
+      // Prévisualisation des données
+      const preview = rows.slice(0, 5).map((row) => row.split(','));
+      setPreviewData(preview);
 
-      // Remplacez l'URL par celle de votre backend Flask
-      const response = await axios.post('http://127.0.0.1:5000/upload-csv', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      // Vérifie si onUploadSuccess est une fonction avant de l'appeler
-      if (typeof onUploadSuccess === 'function') {
-        onUploadSuccess(response.data);
+      // Vérifier si toutes les colonnes requises sont présentes
+      const missingColumns = requiredColumns.filter((col) => !headers.includes(col));
+      if (missingColumns.length > 0) {
+        setError(
+          `Le fichier manque des colonnes requises : ${missingColumns.join(', ')}. Veuillez corriger le fichier et réessayer.`
+        );
+        setIsFileValid(false); // Le fichier n'est pas valide
       } else {
-        console.warn("La fonction onUploadSuccess n'est pas définie");
+        setError(''); // Réinitialiser l'erreur si toutes les colonnes sont présentes
+        setIsFileValid(true); // Le fichier est valide
       }
-    } catch (err) {
-      console.error("Erreur lors de l'upload :", err);
-      setError("Échec de l'upload, veuillez réessayer");
-    } finally {
-      setIsUploading(false);
-    }
+    };
+
+    reader.readAsText(selectedFile);
   }, [onUploadSuccess]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -107,43 +120,44 @@ const DataUploader = ({ onUploadSuccess = () => {} }) => {
         </div>
       )}
       {previewData && (
-          <div className="mt-4 p-4 border rounded-md overflow-x-auto">
-            <h3 className="text-lg font-semibold mb-2 sticky top-0 left-0 w-full">Aperçu des données envoyées :</h3>
-            <table className="w-full text-sm">
-              <thead>
+        <div className="mt-4 p-4 border rounded-md overflow-x-auto">
+          <h3 className="text-lg font-semibold mb-2 sticky top-0 left-0 w-full">Aperçu des données envoyées :</h3>
+          <table className="w-full text-sm">
+            <thead>
               <tr>
                 {previewData[0].map((header, index) => (
-                    <th key={index} className="border px-2 py-1 text-left">
-                      {header}
-                    </th>
+                  <th key={index} className="border px-2 py-1 text-left">
+                    {header}
+                  </th>
                 ))}
               </tr>
-              </thead>
-              <tbody>
+            </thead>
+            <tbody>
               {previewData.map((row, rowIndex) =>
-                      rowIndex > 0 && (
-                          <tr key={rowIndex}>
-                            {row.map((cell, index) => (
-                                <td key={index} className="border px-2 py-1">
-                                  {cell}
-                                </td>
-                            ))}
-                          </tr>
-                      )
+                rowIndex > 0 && (
+                  <tr key={rowIndex}>
+                    {row.map((cell, index) => (
+                      <td key={index} className="border px-2 py-1">
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                )
               )}
-              </tbody>
-            </table>
-            <div className="flex justify-center mt-4 sticky top-0 left-0 w-full">
-              <a href="/overview" target="_self" className="inline-block">
-                <button
-                    className="px-6 py-2 bg-blue-500 text-white font-semibold rounded hover:bg-blue-600 focus:outline-none"
-                >
-                  Get Started
-                </button>
-              </a>
-            </div>
+            </tbody>
+          </table>
+          <div className="flex justify-center mt-4 sticky top-0 left-0 w-full">
+            <a href="/overview" target="_self" className="inline-block">
+              <button
+                className={`px-6 py-2 bg-blue-500 text-white font-semibold rounded focus:outline-none
+                  ${!isFileValid ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'}`}
+                disabled={!isFileValid} // Désactiver le bouton si le fichier n'est pas valide
+              >
+                Get Started
+              </button>
+            </a>
           </div>
-
+        </div>
       )}
     </div>
   );
